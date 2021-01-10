@@ -21,14 +21,48 @@ namespace MuAutoReset
     class Program
     {
 
+        public static int MyHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            if (nCode >= 0)
+            {
+                // You will need to define the struct
+                //var message = (CWPSTRUCT)Marshal.PtrToStructure(lParam, typeof(CWPSTRUCT));
+                // Do something with the data
+            }
+
+            Console.WriteLine(nCode);
+
+            return 0; // Return value is ignored unless you set callNext to false
+        }
+
         static void Main(string[] args)
         {
 
             var mainProcesses = MuClient.StartAll(Utils.LoadConfig());
 
-            while(true)
+            foreach(var item in mainProcesses)
             {
-                Thread.Sleep(1000);
+                var main = item.Value;
+
+                var hookProc = new NativeMethods.HookProc(MyHookCallback);
+
+                var hook = NativeMethods.SetWindowsHookEx(NativeMethods.HookType.WH_GETMESSAGE, hookProc, (IntPtr)(0), 0);
+
+                //Hook MyHook = new Hook(HookType.WH_CALLWNDPROC, false, false);
+                //MyHook.Callback += MyHookCallback;
+                //MyHook.StartHook();
+                
+            }
+
+
+            var x = 0;
+            var y = 0;
+
+            Thread.Sleep(20000);
+
+            while (true)
+            {
+                Thread.Sleep(100);
 
                 var config = Utils.LoadConfig();
 
@@ -37,6 +71,16 @@ namespace MuAutoReset
                     var main = mainProcesses[character.Name];
 
                     NativeMethods.MakeClick(main, 450, 330);
+
+                    var childs = NativeMethods.GetAllChildrenWindowHandles(main.MainWindowHandle, 10);
+
+                    foreach (var child in childs)
+                    {
+                        if (child != null)
+                        {
+                            //NativeMethods.MakeClick(child, 450, 330);
+                        }
+                    }
 
                     //var level = MuClient.GetLevel(main);
 
